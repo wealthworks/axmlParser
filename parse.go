@@ -2,6 +2,7 @@ package axmlParser
 
 import (
 	"archive/zip"
+	"io"
 	"io/ioutil"
 )
 
@@ -11,6 +12,18 @@ func ParseApk(apkpath string, listener Listener) (*Parser, error) {
 		return nil, err
 	}
 	defer r.Close()
+	return parseApkR(&r.Reader, listener)
+}
+
+func ParseApkReader(rd io.ReaderAt, size int64, listener Listener) (*Parser, error) {
+	r, err := zip.NewReader(rd, size)
+	if err != nil {
+		return nil, err
+	}
+	return parseApkR(r, listener)
+}
+
+func parseApkR(r *zip.Reader, listener Listener) (parser *Parser, err error) {
 
 	var xmlf *zip.File
 
@@ -37,7 +50,7 @@ func ParseApk(apkpath string, listener Listener) (*Parser, error) {
 		return nil, err
 	}
 
-	parser := New(listener)
+	parser = New(listener)
 	err = parser.Parse(bs)
 	if err != nil {
 		return nil, err
